@@ -50,7 +50,6 @@ def init_sidebar(cps):
     st.write(json.loads(cps))
     st.sidebar.selectbox('Seleccione CP', json.loads(cps))
 
-
 def transaccion_sector(data):
     res = json.loads(data)
     for idx,i in enumerate(res):
@@ -62,7 +61,16 @@ def transaccion_sector(data):
     st.write("Datos Transacciones > 1000€ y que sean del sector = HOGAR. Ordenadas de mayor a menor IMPORTE y dia")
     df = pd.DataFrame(limit_res).astype(str)
     st.write(df)
-    
+
+def almeria_table(data):
+    st.sidebar.title("Código postal y Municipio: ")
+    res = json.loads(data)
+    for idx,i in enumerate(res):
+        res[idx] = json.loads(i)
+    df = pd.DataFrame(res).astype(str)
+    st.sidebar.write(df)
+
+
 if __name__ == '__main__':
     st.title('Patrones de consumo')
     # r_test = requests.get(url='http://127.0.0.1:5000/api/test').content
@@ -70,12 +78,13 @@ if __name__ == '__main__':
     r_codigos_gasto = requests.get(url='http://127.0.0.1:5000/api/codigos_gasto').content
     r_transaccion_sector = requests.get(url='http://127.0.0.1:5000/api/transaccion_sector').content
     r_cp = requests.get(url='http://127.0.0.1:5000/api/cp').content
-
+    r_almeria = requests.get(url='http://127.0.0.1:5000/api/almeria').content
     
     # test_graph(r)
     rad_hum_eto_table(r_rad_hum_eto)
     # codigos_gasto(r_codigos_gasto)
     # transaccion_sector(r_transaccion_sector)
     init_sidebar(r_cp)
+    almeria_table(r_almeria)
         
 

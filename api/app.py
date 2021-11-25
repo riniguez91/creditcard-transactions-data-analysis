@@ -9,12 +9,13 @@ import pandas
 spark = SparkSession.builder.appName("main").master("local[*]").getOrCreate()
 app = Flask(__name__)
 CORS(app)
-df_cards, df_weather = None, None
+df_cards, df_weather, df_almeria = None, None, None
 
 def init():
-    global df_cards, df_weather
+    global df_cards, df_weather, df_almeria
     df_cards = spark.read.csv('datos/cards.csv', inferSchema=True, header=True, sep='|')
     df_weather = spark.read.csv('datos/weather.csv', inferSchema=True, header=True, sep=';')
+    df_almeria = spark.read.csv('datos/almeria.csv', inferSchema=True, header=True, sep=';')
 
 ''' Gasto total por sector ordenado mayor a menor '''
 @app.route('/api/test', methods=['GET'])
@@ -46,6 +47,11 @@ def cps():
     rows = df_cards.select('CP_CLIENTE').distinct().orderBy('CP_CLIENTE', ascending=True).collect()
     return json.dumps([row['CP_CLIENTE'] for row in rows])
     
+@app.route('/api/almeria', methods=['GET'])
+def almeria():
+    result = df_almeria.select('CP', 'Municipio').toJSON().collect()
+    return json.dumps(result)
+
 if __name__ == "__main__":
     init()
     app.run(debug=True)
