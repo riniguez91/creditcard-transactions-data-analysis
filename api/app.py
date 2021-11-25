@@ -1,3 +1,4 @@
+import re
 from flask import Flask
 from pyspark.sql import SparkSession
 from flask_cors import CORS
@@ -15,13 +16,31 @@ def init():
     df_cards = spark.read.csv('datos/cards.csv', inferSchema=True, header=True, sep='|')
     df_weather = spark.read.csv('datos/weather.csv', inferSchema=True, header=True, sep=';')
 
-
+''' Gasto total por sector ordenado mayor a menor '''
 @app.route('/api/test', methods=['GET'])
 def test():
-    result = df_cards.groupBy('SECTOR').count().toJSON().collect()
+    result = df_cards.groupBy('SECTOR').count().orderBy(['count'], ascending=False).toJSON().collect()
     return json.dumps(result)
 
-    
+''' Radiacion + Humedad + ETo para ver si influyen '''
+@app.route('/api/rad_hum_eto', methods=['GET'])
+def rad_hum_eto():
+    result = df_weather.select('FECHA', 'DIA', 'Rad', 'HumMax', 'ETo').toJSON().collect()
+    return json.dumps(result)
+
+''' Mostrar 10 codigos_cliente (codigo postal) con mayor gasto '''
+@app.route('/api/codigos_gasto', methods=['GET'])
+def codigos_gasto():
+    df_cards.createOrReplaceTempView('sqlTable')
+    result = spark.sql(''' SELECT CP_CLIENTE, SUM(IMPORTE) AS IMPORTE_TOTAL FROM sqlTable GROUP BY CP_CLIENTE ORDER BY IMPORTE_TOTAL DESC LIMIT 10 ''').toJSON().collect()
+    return json.dumps(result)
+
+''' Transacciones > 1000€ y que sean del sector = HOGAR. Ordenadas de mayor a menor IMPORTE y dia''' 
+@app.route('/api/transaccion_sector', methods=['GET'])
+def transaccion_sector():
+    result = df_cards.filter((df_cards.IMPORTE > 1000) & (df_cards.SECTOR == "HOGAR")).orderBy(['IMPORTE','DIA'], ascending=False).toJSON().collect()
+    return json.dumps(result)
+
 if __name__ == "__main__":
     init()
     app.run(debug=True)
