@@ -41,6 +41,11 @@ def transaccion_sector():
     result = df_cards.filter((df_cards.IMPORTE > 1000) & (df_cards.SECTOR == "HOGAR")).orderBy(['IMPORTE','DIA'], ascending=False).toJSON().collect()
     return json.dumps(result)
 
+@app.route('/api/cp', methods=['GET'])
+def cps():
+    rows = df_cards.select('CP_CLIENTE').distinct().orderBy('CP_CLIENTE', ascending=True).collect()
+    return json.dumps([row['CP_CLIENTE'] for row in rows])
+    
 if __name__ == "__main__":
     init()
     app.run(debug=True)
