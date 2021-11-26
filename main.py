@@ -70,8 +70,25 @@ def almeria_table(data):
     df = pd.DataFrame(res).astype(str)
     st.sidebar.write(df)
 
+def municipio_cards_table(data):
+    st.title('Municipio y su información')
+    res = json.loads(data)
+    for idx,i in enumerate(res):
+        res[idx] = json.loads(i)
+    df = pd.DataFrame(res).astype(str)
+    st.write(df)
+
+def settings_st():
+    #Page settings
+    st.set_page_config(
+        page_title="Grandes Volumenes de Datos",
+        page_icon="💻",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
 
 if __name__ == '__main__':
+    settings_st()
     st.title('Patrones de consumo')
     # r_test = requests.get(url='http://127.0.0.1:5000/api/test').content
     r_rad_hum_eto = requests.get(url='http://127.0.0.1:5000/api/rad_hum_eto').content
@@ -79,6 +96,8 @@ if __name__ == '__main__':
     r_transaccion_sector = requests.get(url='http://127.0.0.1:5000/api/transaccion_sector').content
     r_cp = requests.get(url='http://127.0.0.1:5000/api/cp').content
     r_almeria = requests.get(url='http://127.0.0.1:5000/api/almeria').content
+    r_municipio_cards = requests.get(url='http://127.0.0.1:5000/api/municipio_cards').content
+
     
     # test_graph(r)
     rad_hum_eto_table(r_rad_hum_eto)
@@ -86,5 +105,6 @@ if __name__ == '__main__':
     # transaccion_sector(r_transaccion_sector)
     init_sidebar(r_cp)
     almeria_table(r_almeria)
+    municipio_cards_table(r_municipio_cards)
         
 

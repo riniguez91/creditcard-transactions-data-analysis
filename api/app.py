@@ -52,6 +52,14 @@ def almeria():
     result = df_almeria.select('CP', 'Municipio').toJSON().collect()
     return json.dumps(result)
 
+@app.route('/api/municipio_cards', methods=['GET'])
+def municipio_cards():
+    df_cards.createOrReplaceTempView('sqlCards')
+    df_almeria.createOrReplaceTempView('sqlAlmeria')
+    result = spark.sql(''' SELECT sqlAlmeria.CP, sqlAlmeria.Municipio, sqlCards.SECTOR, sqlCards.DIA, sqlCards.IMPORTE,sqlCards.NUM_OP FROM sqlCards 
+    JOIN sqlAlmeria ON sqlCards.CP_CLIENTE = sqlAlmeria.CP ''').toJSON().collect()
+    return json.dumps(result)
+
 if __name__ == "__main__":
     init()
     app.run(debug=True)
