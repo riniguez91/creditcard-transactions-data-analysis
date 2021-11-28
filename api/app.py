@@ -24,35 +24,38 @@ def total_cost_per_sector():
     result = df_cards.groupBy('SECTOR').count().orderBy(['count'], ascending=False).toJSON().collect()
     return json.dumps(result)
 
-''' Radiacion + Humedad + ETo para ver si influyen '''
+''' Evapotranspiración dependiendo de la Humedad y la Radiación Solar '''
 @app.route('/api/rad_hum_eto', methods=['GET'])
 def rad_hum_eto():
     result = df_weather.select('FECHA', 'DIA', 'Rad', 'HumMax', 'ETo').toJSON().collect()
     return json.dumps(result)
 
-''' Mostrar 10 codigos_cliente (codigo postal) con mayor gasto '''
+''' Mostrar los 10 codigos_cliente (codigo postal) con mayor gasto '''
 @app.route('/api/codigos_gasto', methods=['GET'])
 def codigos_gasto():
     df_cards.createOrReplaceTempView('sqlTable')
     result = spark.sql(''' SELECT CP_CLIENTE, SUM(IMPORTE) AS IMPORTE_TOTAL FROM sqlTable GROUP BY CP_CLIENTE ORDER BY IMPORTE_TOTAL DESC LIMIT 10 ''').toJSON().collect()
     return json.dumps(result)
 
-''' Transacciones > 1000€ y que sean del sector = HOGAR. Ordenadas de mayor a menor IMPORTE y dia''' 
+''' Transacciones > 1000€ y que sean del sector = HOGAR. Ordenadas de mayor a menor IMPORTE y dia, con CP introducido por usuario ''' 
 @app.route('/api/transaccion_sector', methods=['GET'])
 def transaccion_sector():
-    result = df_cards.filter((df_cards.IMPORTE > 1000) & (df_cards.SECTOR == "HOGAR")).orderBy(['IMPORTE','DIA'], ascending=False).toJSON().collect()
+    result = df_cards.filter((df_cards.IMPORTE > 1000) & (df_cards.SECTOR == "HOGAR") & (df_cards.CP_CLIENTE == cp)).orderBy(['IMPORTE','DIA'], ascending=False).toJSON().collect()
     return json.dumps(result)
 
+''' Seleccionar el CP unico ordenado de menor a mayor '''
 @app.route('/api/cp', methods=['GET'])
 def cps():
     rows = df_cards.select('CP_CLIENTE').distinct().orderBy('CP_CLIENTE', ascending=True).collect()
     return json.dumps([row['CP_CLIENTE'] for row in rows])
-    
+
+''' Seleccionar CP y Municipio del dataframe almería '''
 @app.route('/api/almeria', methods=['GET'])
 def almeria():
     result = df_almeria.select('CP', 'Municipio').toJSON().collect()
     return json.dumps(result)
 
+''' Recoger el valor del CP desde el selectBox '''
 @app.route('/api/cp_selected', methods=['POST'])
 def cp_selected():
     global cp
@@ -60,6 +63,7 @@ def cp_selected():
     cp = request_data['cp']
     return json.dumps({'message': 'success'})
 
+''' JOIN de cards y almeria '''
 @app.route('/api/municipio_cards', methods=['GET'])
 def municipio_cards():
     df_cards.createOrReplaceTempView('sqlCards')
