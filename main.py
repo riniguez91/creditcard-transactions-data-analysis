@@ -4,6 +4,10 @@ import requests
 import json
 import numpy as np
 
+
+#variable global para el municipio del que se quiere mostrar los datos
+cp_selected = 0
+
 def test_graph(data):
     res = json.loads(data)
     for idx,i in enumerate(res):
@@ -47,8 +51,9 @@ def codigos_gasto(data):
 def init_sidebar(cps):
     st.sidebar.title('Selector de zona')
     st.sidebar.markdown('Seleccione el codigo postal correspondiente con la zona deseado:')
-    st.write(json.loads(cps))
-    st.sidebar.selectbox('Seleccione CP', json.loads(cps))
+    global cp_selected
+    cp_selected = st.sidebar.selectbox('Seleccione CP', json.loads(cps), on_change= requests.post(url='http://127.0.0.1:5000/api/cp_selected', data=cp_selected))
+    st.write('has seleccionado',cp_selected)
 
 def transaccion_sector(data):
     res = json.loads(data)
@@ -90,21 +95,24 @@ def settings_st():
 if __name__ == '__main__':
     settings_st()
     st.title('Patrones de consumo')
-    # r_test = requests.get(url='http://127.0.0.1:5000/api/test').content
-    r_rad_hum_eto = requests.get(url='http://127.0.0.1:5000/api/rad_hum_eto').content
-    r_codigos_gasto = requests.get(url='http://127.0.0.1:5000/api/codigos_gasto').content
-    r_transaccion_sector = requests.get(url='http://127.0.0.1:5000/api/transaccion_sector').content
-    r_cp = requests.get(url='http://127.0.0.1:5000/api/cp').content
-    r_almeria = requests.get(url='http://127.0.0.1:5000/api/almeria').content
-    r_municipio_cards = requests.get(url='http://127.0.0.1:5000/api/municipio_cards').content
-
+    try:
+        # r_test = requests.get(url='http://127.0.0.1:5000/api/test').content
+        #r_rad_hum_eto = requests.get(url='http://127.0.0.1:5000/api/rad_hum_eto').content
+        #r_codigos_gasto = requests.get(url='http://127.0.0.1:5000/api/codigos_gasto').content
+        #r_transaccion_sector = requests.get(url='http://127.0.0.1:5000/api/transaccion_sector').content
+        r_cp = requests.get(url='http://127.0.0.1:5000/api/cp').content
+        ##r_almeria = requests.get(url='http://127.0.0.1:5000/api/almeria').content
+        r_municipio_cards = requests.get(url='http://127.0.0.1:5000/api/municipio_cards').content
+    except requests.exceptions.ConnectionError:
+        print( "Connection refused" )
+    
     
     # test_graph(r)
-    rad_hum_eto_table(r_rad_hum_eto)
-    # codigos_gasto(r_codigos_gasto)
-    # transaccion_sector(r_transaccion_sector)
+    #rad_hum_eto_table(r_rad_hum_eto)
+    #codigos_gasto(r_codigos_gasto)
+    #transaccion_sector(r_transaccion_sector)
     init_sidebar(r_cp)
-    almeria_table(r_almeria)
+    ##almeria_table(r_almeria)
     municipio_cards_table(r_municipio_cards)
         
 

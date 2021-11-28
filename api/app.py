@@ -1,5 +1,5 @@
 import re
-from flask import Flask
+from flask import Flask, request
 from pyspark.sql import SparkSession
 from flask_cors import CORS
 import json
@@ -10,6 +10,7 @@ spark = SparkSession.builder.appName("main").master("local[*]").getOrCreate()
 app = Flask(__name__)
 CORS(app)
 df_cards, df_weather, df_almeria = None, None, None
+cp = 4001
 
 def init():
     global df_cards, df_weather, df_almeria
@@ -52,12 +53,27 @@ def almeria():
     result = df_almeria.select('CP', 'Municipio').toJSON().collect()
     return json.dumps(result)
 
+
+#funcion auxiliar para convertir el request de un post a una variable global
+def cp_to_global(data):
+    cp = data
+    return cp
+    
+@app.route('/api/cp_selected', methods=['POST'])
+def cp_selected():
+    global cp
+    cp = request.data
+    print(cp)
+    return json.dumps({'message': 'success'})
+
 @app.route('/api/municipio_cards', methods=['GET'])
 def municipio_cards():
     df_cards.createOrReplaceTempView('sqlCards')
     df_almeria.createOrReplaceTempView('sqlAlmeria')
+    
+    
     result = spark.sql(''' SELECT sqlAlmeria.CP, sqlAlmeria.Municipio, sqlCards.SECTOR, sqlCards.DIA, sqlCards.IMPORTE,sqlCards.NUM_OP FROM sqlCards 
-    JOIN sqlAlmeria ON sqlCards.CP_CLIENTE = sqlAlmeria.CP ''').toJSON().collect()
+    JOIN sqlAlmeria ON sqlCards.CP_CLIENTE = sqlAlmeria.CP WHERE CP = {} '''.format(cp)).toJSON().collect()
     return json.dumps(result)
 
 if __name__ == "__main__":
