@@ -19,8 +19,8 @@ def init():
     df_almeria = spark.read.csv('datos/almeria.csv', inferSchema=True, header=True, sep=';')
 
 ''' Gasto total por sector ordenado mayor a menor '''
-@app.route('/api/test', methods=['GET'])
-def test():
+@app.route('/api/total_cost_per_sector', methods=['GET'])
+def total_cost_per_sector():
     result = df_cards.groupBy('SECTOR').count().orderBy(['count'], ascending=False).toJSON().collect()
     return json.dumps(result)
 
@@ -53,25 +53,18 @@ def almeria():
     result = df_almeria.select('CP', 'Municipio').toJSON().collect()
     return json.dumps(result)
 
-
-#funcion auxiliar para convertir el request de un post a una variable global
-def cp_to_global(data):
-    cp = data
-    return cp
-    
 @app.route('/api/cp_selected', methods=['POST'])
 def cp_selected():
     global cp
-    cp = request.data
-    print(cp)
+    request_data = json.loads(request.data)
+    cp = request_data['cp']
     return json.dumps({'message': 'success'})
 
 @app.route('/api/municipio_cards', methods=['GET'])
 def municipio_cards():
     df_cards.createOrReplaceTempView('sqlCards')
     df_almeria.createOrReplaceTempView('sqlAlmeria')
-    
-    
+     
     result = spark.sql(''' SELECT sqlAlmeria.CP, sqlAlmeria.Municipio, sqlCards.SECTOR, sqlCards.DIA, sqlCards.IMPORTE,sqlCards.NUM_OP FROM sqlCards 
     JOIN sqlAlmeria ON sqlCards.CP_CLIENTE = sqlAlmeria.CP WHERE CP = {} '''.format(cp)).toJSON().collect()
     return json.dumps(result)
